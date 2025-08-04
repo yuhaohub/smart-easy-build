@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: 智易搭SEB
+server:
+  port: 8123
+  servlet:
+    context-path: /api
+
+# knife4j
+springdoc:
+  group-configs:
+    - group: 'default'
+      packages-to-scan: com.yuhao.smarteasybuild.controller
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
