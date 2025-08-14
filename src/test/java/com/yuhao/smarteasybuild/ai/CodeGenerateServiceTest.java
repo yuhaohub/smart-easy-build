@@ -1,6 +1,8 @@
 package com.yuhao.smarteasybuild.ai;
 
 import cn.hutool.core.lang.Assert;
+import com.yuhao.smarteasybuild.ai.model.HCJCodeResult;
+import com.yuhao.smarteasybuild.ai.model.HtmlCodeResult;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,12 +14,12 @@ class CodeGenerateServiceTest {
 
     @Test
     void generateHtmlCode() {
-        String result = codeGeneratorService.generateHtmlCode("做个计算器");
+        HtmlCodeResult result = codeGeneratorService.generateHtmlCode("做个计算器");
         Assert.notNull(result);
     }
 
     @Test
     void generateHCJCode() {
-        String result = codeGeneratorService.generateHCJlCode("做个留言板");
+        HCJCodeResult result = codeGeneratorService.generateHCJlCode("做个留言板");
     }
 }
