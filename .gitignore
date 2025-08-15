@@ -35,3 +35,7 @@ build/
 ### application ###
 src/main/resources/application-local.yml
 
+
+### custom ###
+tmp/
+
