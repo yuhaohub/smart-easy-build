@@ -2,6 +2,7 @@ package com.yuhao.smarteasybuild.core;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.yuhao.smarteasybuild.ai.model.HCJCodeResult;
 import com.yuhao.smarteasybuild.ai.model.HtmlCodeResult;
 import com.yuhao.smarteasybuild.model.enums.GenCodeTypeEnum;
@@ -17,24 +18,27 @@ public class CodeFileSaver {
     //构建唯一路径
 
     private static String buildUniquePath(String bizType) {
-        String uniqueDirName = String.format("{}_{}",bizType, IdUtil.getSnowflakeNextIdStr());
+        String uniqueDirName = StrUtil.format("{}_{}",bizType, IdUtil.getSnowflakeNextIdStr());
         String path = ROOT_DIR + File.separator +uniqueDirName;
         FileUtil.mkdir(path);
         return path;
     }
 
     //保存单个HTML页面代码
-    public void saveHtmlCode(HtmlCodeResult htmlCode) {
+    public static File saveHtmlCode(HtmlCodeResult htmlCode) {
         String path = buildUniquePath(GenCodeTypeEnum.HTML.getValue());
         saveFile(path,"index.html",htmlCode.getHtmlCode());
+        return new File(path);
+
     }
 
     //保存html+css+js文件代码
-    public void saveHtmlCssJsCode(HCJCodeResult htmlCode) {
+    public static File saveHtmlCssJsCode(HCJCodeResult htmlCode) {
         String path = buildUniquePath(GenCodeTypeEnum.HCJ.getValue());
         saveFile(path,"index.html",htmlCode.getHtmlCode());
         saveFile(path,"style.css",htmlCode.getCssCode());
         saveFile(path,"script.js",htmlCode.getJsCode());
+        return new File(path);
     }
 
 
