@@ -3,6 +3,11 @@ spring:
     name: 智易搭SEB
   profiles:
     active: local
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/seb
+    username: root
+    password: root
 server:
   port: 8123
   servlet:
@@ -20,4 +25,15 @@ knife4j:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
+
+# AI
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url:
+      api-key:
+      model-name:
+      log-requests:
+      log-responses:
+      strict-json-schema:
 

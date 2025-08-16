@@ -3,6 +3,7 @@ package com.yuhao.smarteasybuild.ai;
 import com.yuhao.smarteasybuild.ai.model.HCJCodeResult;
 import com.yuhao.smarteasybuild.ai.model.HtmlCodeResult;
 import dev.langchain4j.service.SystemMessage;
+import reactor.core.publisher.Flux;
 
 
 public interface CodeGeneratorService {
@@ -22,4 +23,20 @@ public interface CodeGeneratorService {
      */
     @SystemMessage(fromResource = "prompt/generate-hcj-system-prompt.txt")
     HCJCodeResult generateHCJlCode(String userMessage);
+
+    /**
+     * 生成html页面(流式)
+     * @param userMessage
+     * @return
+     */
+    @SystemMessage(fromResource = "prompt/generate-html-system-prompt.txt")
+    Flux<String> generateHtmlCodeStream(String userMessage);
+
+    /**
+     * 多文件 html+css+js(流式)
+     * @param userMessage
+     * @return
+     */
+    @SystemMessage(fromResource = "prompt/generate-hcj-system-prompt.txt")
+    Flux<String>  generateHCJlCodeStream(String userMessage);
 }
