@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 /**
  * 代码解析器
  */
+@Deprecated
 public class CodeParser {
 
     private static final Pattern HTML_CODE_PATTERN = Pattern.compile("```html\\s*\\n([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);

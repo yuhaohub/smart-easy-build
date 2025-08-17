@@ -3,6 +3,8 @@ package com.yuhao.smarteasybuild.core;
 import com.yuhao.smarteasybuild.ai.CodeGeneratorService;
 import com.yuhao.smarteasybuild.ai.model.HCJCodeResult;
 import com.yuhao.smarteasybuild.ai.model.HtmlCodeResult;
+import com.yuhao.smarteasybuild.core.parser.CodeParserExecutor;
+import com.yuhao.smarteasybuild.core.saver.CodeSaverExecutor;
 import com.yuhao.smarteasybuild.exception.BusinessException;
 import com.yuhao.smarteasybuild.exception.ErrorCode;
 import com.yuhao.smarteasybuild.model.enums.GenCodeTypeEnum;
@@ -23,22 +25,24 @@ public class AiCodeGeneratorFacade {
     private CodeGeneratorService codeGeneratorService;
 
     /**
-     * 入口
+     * 入口: 根据类型生成代码并保存
      * @param userMessage
-     * @param genCodeTypeEnum
+     * @param genCodeType
      * @return
      */
-    public File generateCodeAndSave(String userMessage, GenCodeTypeEnum genCodeTypeEnum){
-        if (genCodeTypeEnum == null){
+    public File generateCodeAndSave(String userMessage, GenCodeTypeEnum genCodeType){
+        if (genCodeType == null){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"生成类型为空,请提供生成类型");
         }
         File result = null;
-        switch (genCodeTypeEnum){
+        switch (genCodeType){
             case HTML:
-                result = generateHtmlCodeAndSave(userMessage);
+                HtmlCodeResult resultHtml = codeGeneratorService.generateHtmlCode(userMessage);
+                result = CodeSaverExecutor.excute(resultHtml,genCodeType);
                 break;
             case HCJ:
-                result = generateHCJCodeAndSave(userMessage);
+                HCJCodeResult resultHCJ = codeGeneratorService.generateHCJlCode(userMessage);
+                result = CodeSaverExecutor.excute(resultHCJ,genCodeType);
                 break;
             default:
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"未知的生成类型");
@@ -46,89 +50,37 @@ public class AiCodeGeneratorFacade {
         return result;
     }
 
-    /**
-     * 生成并保存html文件
-     * @param userMessage
-     * @return
-     */
-    private File generateHtmlCodeAndSave(String userMessage){
-        HtmlCodeResult htmlCodeResult = codeGeneratorService.generateHtmlCode(userMessage);
-        return CodeFileSaver.saveHtmlCode(htmlCodeResult);
-    }
 
     /**
-     * 生成html+css+js文件并保存
+     * 入口(流式):根据类型生成代码并保存
      * @param userMessage
+     * @param genCodeType
      * @return
      */
-    private File generateHCJCodeAndSave(String userMessage){
-        HCJCodeResult hcjCodeResult = codeGeneratorService.generateHCJlCode(userMessage);
-        return CodeFileSaver.saveHtmlCssJsCode(hcjCodeResult);
-    }
-
-
-    /**
-     * 入口(流式)
-     * @param userMessage
-     * @param genCodeTypeEnum
-     * @return
-     */
-    public  Flux<String> generateCodeAndSaveStream(String userMessage, GenCodeTypeEnum genCodeTypeEnum){
-        if (genCodeTypeEnum == null){
+    public  Flux<String> generateCodeAndSaveStream(String userMessage, GenCodeTypeEnum genCodeType){
+        if (genCodeType == null){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"生成类型为空,请提供生成类型");
         }
         Flux<String> result = null;
-        switch (genCodeTypeEnum){
+        switch (genCodeType){
             case HTML:
-                result = generateHtmlCodeAndSaveStream(userMessage);
-                break;
+                result = codeGeneratorService.generateHtmlCodeStream(userMessage);
+                return generateStreamProcess(result, genCodeType);
             case HCJ:
-                result = generateHCJCodeAndSaveStream(userMessage);
-                break;
+                result = codeGeneratorService.generateHCJlCodeStream(userMessage);
+                return generateStreamProcess(result, genCodeType);
             default:
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"未知的生成类型");
         }
-        return result;
     }
 
-    /**
-     * 生成并保存html文件(流式)
-     * @param userMessage
-     * @return
-     */
-    private Flux<String> generateHtmlCodeAndSaveStream(String userMessage){
-        Flux<String> result = codeGeneratorService.generateHtmlCodeStream(userMessage);
-        // 当流式返回生成代码完成后，再保存代码
-        StringBuilder codeBuilder = new StringBuilder();
-        return result
-                .doOnNext(chunk -> {
-                    // 实时收集代码片段
-                    codeBuilder.append(chunk);
-                })
-                .doOnComplete(() -> {
-                    // 流式返回完成后保存代码
-                    try {
-                        String completeHtmlCode = codeBuilder.toString();
-                        HtmlCodeResult htmlCodeResult = CodeParser.parseHtmlCode(completeHtmlCode);
-                        // 保存代码到文件
-                        File savedDir = CodeFileSaver.saveHtmlCode(htmlCodeResult);
-                        log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
-                    } catch (Exception e) {
-                        log.error("保存失败: {}", e.getMessage());
-                    }
-                });
-    }
 
-    /**
-     * 生成html+css+js文件并保存(流式)
-     * @param userMessage
-     * @return
-     */
-    private  Flux<String> generateHCJCodeAndSaveStream(String userMessage){
-        Flux<String> result = codeGeneratorService.generateHCJlCodeStream(userMessage);
+
+    private  Flux<String> generateStreamProcess(Flux<String> codeStream, GenCodeTypeEnum genCodeType){
+
         // 当流式返回生成代码完成后，再保存代码
         StringBuilder codeBuilder = new StringBuilder();
-        return result
+        return codeStream
                 .doOnNext(chunk -> {
                     // 实时收集代码片段
                     codeBuilder.append(chunk);
@@ -137,15 +89,14 @@ public class AiCodeGeneratorFacade {
                     // 流式返回完成后保存代码
                     try {
                         String completeMultiFileCode = codeBuilder.toString();
-                        HCJCodeResult multiFileResult = CodeParser.parseHCJCode(completeMultiFileCode);
+                        Object parserResult = CodeParserExecutor.execute(completeMultiFileCode, genCodeType);
                         // 保存代码到文件
-                        File savedDir = CodeFileSaver.saveHtmlCssJsCode(multiFileResult);
+                        File savedDir = CodeSaverExecutor.excute(parserResult,genCodeType);
                         log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
                     } catch (Exception e) {
                         log.error("保存失败: {}", e.getMessage());
                     }
                 });
     }
-
 
 }
