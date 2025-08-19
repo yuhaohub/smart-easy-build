@@ -15,8 +15,8 @@ public class HCJCodeSaver extends CodeSaverTemplate<HCJCodeResult>{
     @Override
     protected void saveFiles(HCJCodeResult result, String path) {
         saveFile(path,"index.html",result.getHtmlCode());
-        saveFile(path,"index.css",result.getCssCode());
-        saveFile(path,"index.js",result.getJsCode());
+        saveFile(path,"style.css",result.getCssCode());
+        saveFile(path,"script.js",result.getJsCode());
     }
 
     @Override
