@@ -1,7 +1,6 @@
 package com.yuhao.smarteasybuild.core.saver;
 
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.yuhao.smarteasybuild.exception.BusinessException;
 import com.yuhao.smarteasybuild.exception.ErrorCode;
@@ -17,11 +16,11 @@ public abstract class CodeSaverTemplate<T> {
     //文件根目录
     private static final String ROOT_DIR =  System.getProperty("user.dir") + "/tmp/code_output";
 
-    protected File save(T codeResult){
+    protected File save(T codeResult,Long appId){
         //校验
         validateInput(codeResult);
         //构建保存路径
-        String path = buildUniquePath(getFileType());
+        String path = buildUniquePath(getFileType(),appId);
         //保存代码文件
         saveFiles(codeResult,path);
         //返回文件对象
@@ -32,10 +31,11 @@ public abstract class CodeSaverTemplate<T> {
     /**
      * 构建唯一的保存路径
      * @param bizType
+     * @param appId
      * @return
      */
-    protected  final String buildUniquePath(String bizType) {
-        String uniqueDirName = StrUtil.format("{}_{}",bizType, IdUtil.getSnowflakeNextIdStr());
+    protected  final String buildUniquePath(String bizType,Long appId) {
+        String uniqueDirName = StrUtil.format("{}_{}",bizType, appId);
         String path = ROOT_DIR + File.separator +uniqueDirName;
         FileUtil.mkdir(path);
         return path;

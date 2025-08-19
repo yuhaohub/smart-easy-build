@@ -17,12 +17,12 @@ public class CodeSaverExecutor {
     private static final HCJCodeSaver hcjCodeSaver = new HCJCodeSaver();
 
 
-    public static File excute(Object codeResult, GenCodeTypeEnum codeType){
+    public static File excute(Object codeResult, GenCodeTypeEnum codeType,Long appId){
         switch (codeType){
             case HTML:
-                return htmlCodeSaver.save((HtmlCodeResult) codeResult);
+                return htmlCodeSaver.save((HtmlCodeResult) codeResult,appId);
             case HCJ:
-                return hcjCodeSaver.save((HCJCodeResult) codeResult);
+                return hcjCodeSaver.save((HCJCodeResult) codeResult,appId);
             default:
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"未知的生成类型");
         }

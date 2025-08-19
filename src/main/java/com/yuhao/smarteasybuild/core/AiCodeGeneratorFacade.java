@@ -30,7 +30,7 @@ public class AiCodeGeneratorFacade {
      * @param genCodeType
      * @return
      */
-    public File generateCodeAndSave(String userMessage, GenCodeTypeEnum genCodeType){
+    public File generateCodeAndSave(String userMessage, GenCodeTypeEnum genCodeType,Long appId){
         if (genCodeType == null){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"生成类型为空,请提供生成类型");
         }
@@ -38,11 +38,11 @@ public class AiCodeGeneratorFacade {
         switch (genCodeType){
             case HTML:
                 HtmlCodeResult resultHtml = codeGeneratorService.generateHtmlCode(userMessage);
-                result = CodeSaverExecutor.excute(resultHtml,genCodeType);
+                result = CodeSaverExecutor.excute(resultHtml,genCodeType,appId);
                 break;
             case HCJ:
                 HCJCodeResult resultHCJ = codeGeneratorService.generateHCJlCode(userMessage);
-                result = CodeSaverExecutor.excute(resultHCJ,genCodeType);
+                result = CodeSaverExecutor.excute(resultHCJ,genCodeType,appId);
                 break;
             default:
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"未知的生成类型");
@@ -57,7 +57,7 @@ public class AiCodeGeneratorFacade {
      * @param genCodeType
      * @return
      */
-    public  Flux<String> generateCodeAndSaveStream(String userMessage, GenCodeTypeEnum genCodeType){
+    public  Flux<String> generateCodeAndSaveStream(String userMessage, GenCodeTypeEnum genCodeType, Long appId){
         if (genCodeType == null){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"生成类型为空,请提供生成类型");
         }
@@ -65,10 +65,10 @@ public class AiCodeGeneratorFacade {
         switch (genCodeType){
             case HTML:
                 result = codeGeneratorService.generateHtmlCodeStream(userMessage);
-                return generateStreamProcess(result, genCodeType);
+                return generateStreamProcess(result, genCodeType, appId);
             case HCJ:
                 result = codeGeneratorService.generateHCJlCodeStream(userMessage);
-                return generateStreamProcess(result, genCodeType);
+                return generateStreamProcess(result, genCodeType, appId);
             default:
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"未知的生成类型");
         }
@@ -76,7 +76,7 @@ public class AiCodeGeneratorFacade {
 
 
 
-    private  Flux<String> generateStreamProcess(Flux<String> codeStream, GenCodeTypeEnum genCodeType){
+    private  Flux<String> generateStreamProcess(Flux<String> codeStream, GenCodeTypeEnum genCodeType, Long appId){
 
         // 当流式返回生成代码完成后，再保存代码
         StringBuilder codeBuilder = new StringBuilder();
@@ -91,7 +91,7 @@ public class AiCodeGeneratorFacade {
                         String completeMultiFileCode = codeBuilder.toString();
                         Object parserResult = CodeParserExecutor.execute(completeMultiFileCode, genCodeType);
                         // 保存代码到文件
-                        File savedDir = CodeSaverExecutor.excute(parserResult,genCodeType);
+                        File savedDir = CodeSaverExecutor.excute(parserResult,genCodeType,appId);
                         log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
                     } catch (Exception e) {
                         log.error("保存失败: {}", e.getMessage());
