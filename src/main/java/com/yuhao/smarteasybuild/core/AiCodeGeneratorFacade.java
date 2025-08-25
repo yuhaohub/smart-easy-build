@@ -1,6 +1,7 @@
 package com.yuhao.smarteasybuild.core;
 
 import com.yuhao.smarteasybuild.ai.CodeGeneratorService;
+import com.yuhao.smarteasybuild.ai.CodeGeneratorServiceFactory;
 import com.yuhao.smarteasybuild.ai.model.HCJCodeResult;
 import com.yuhao.smarteasybuild.ai.model.HtmlCodeResult;
 import com.yuhao.smarteasybuild.core.parser.CodeParserExecutor;
@@ -22,8 +23,7 @@ import java.io.File;
 @Service
 public class AiCodeGeneratorFacade {
     @Resource
-    private CodeGeneratorService codeGeneratorService;
-
+    private CodeGeneratorServiceFactory codeGeneratorServiceFactory;
     /**
      * 入口: 根据类型生成代码并保存
      * @param userMessage
@@ -34,6 +34,8 @@ public class AiCodeGeneratorFacade {
         if (genCodeType == null){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"生成类型为空,请提供生成类型");
         }
+        // 根据 appId 获取相应的 AI 服务实例
+        CodeGeneratorService codeGeneratorService = codeGeneratorServiceFactory.getCodeGeneratorService(appId);
         File result = null;
         switch (genCodeType){
             case HTML:
@@ -61,6 +63,8 @@ public class AiCodeGeneratorFacade {
         if (genCodeType == null){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"生成类型为空,请提供生成类型");
         }
+        // 根据 appId 获取相应的 AI 服务实例
+        CodeGeneratorService codeGeneratorService = codeGeneratorServiceFactory.getCodeGeneratorService(appId);
         Flux<String> result = null;
         switch (genCodeType){
             case HTML:
