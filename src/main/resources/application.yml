@@ -3,6 +3,9 @@ spring:
     name: 智易搭SEB
   profiles:
     active: local
+  session:
+    store-type: redis
+    timeout: 2592000
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/seb
@@ -19,7 +22,9 @@ server:
   port: 8123
   servlet:
     context-path: /api
-
+    session:
+      cookie:
+        max-age: 2592000
 # knife4j
 springdoc:
   group-configs:
