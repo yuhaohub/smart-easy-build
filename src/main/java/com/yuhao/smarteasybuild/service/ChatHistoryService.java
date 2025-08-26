@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yuhao.smarteasybuild.model.entity.ChatHistory;
 import com.yuhao.smarteasybuild.model.entity.User;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 
 import java.time.LocalDateTime;
 
@@ -40,4 +41,13 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @return
      */
     Page<ChatHistory> listAppChatHistoryByPage(Long appId, User loginuser, int pageSize, LocalDateTime lastTime);
+
+    /**
+     * 加载对话历史到内存中
+     * @param appId
+     * @param chatMemory
+     * @param maxCount
+     * @return
+     */
+    int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount);
 }
