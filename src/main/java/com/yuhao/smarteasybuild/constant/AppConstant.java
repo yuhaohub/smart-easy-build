@@ -15,13 +15,13 @@ public interface AppConstant {
     /**
      * 代码生成路径
      */
-    String CODE_GEN_PATH = System.getProperty("user.dir") +"tmp/code_output";
+    String CODE_GEN_PATH = System.getProperty("user.dir") +"/tmp/code_output";
 
 
     /**
      * 代码部署路径
      */
-    String CODE_DEPLOY_PATH = System.getProperty("user.dir") +"tmp/code_deploy";
+    String CODE_DEPLOY_PATH = System.getProperty("user.dir") +"/tmp/code_deploy";
 
     /**
      * 代码部署域名
