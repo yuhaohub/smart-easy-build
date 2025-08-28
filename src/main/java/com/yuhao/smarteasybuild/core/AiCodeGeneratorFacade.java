@@ -1,14 +1,21 @@
 package com.yuhao.smarteasybuild.core;
 
+import cn.hutool.json.JSONUtil;
 import com.yuhao.smarteasybuild.ai.CodeGeneratorService;
 import com.yuhao.smarteasybuild.ai.CodeGeneratorServiceFactory;
 import com.yuhao.smarteasybuild.ai.model.HCJCodeResult;
 import com.yuhao.smarteasybuild.ai.model.HtmlCodeResult;
+import com.yuhao.smarteasybuild.ai.model.message.AiResponseMessage;
+import com.yuhao.smarteasybuild.ai.model.message.ToolExecutedMessage;
+import com.yuhao.smarteasybuild.ai.model.message.ToolRequestMessage;
 import com.yuhao.smarteasybuild.core.parser.CodeParserExecutor;
 import com.yuhao.smarteasybuild.core.saver.CodeSaverExecutor;
 import com.yuhao.smarteasybuild.exception.BusinessException;
 import com.yuhao.smarteasybuild.exception.ErrorCode;
 import com.yuhao.smarteasybuild.model.enums.GenCodeTypeEnum;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.ToolExecution;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -64,7 +71,7 @@ public class AiCodeGeneratorFacade {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"生成类型为空,请提供生成类型");
         }
         // 根据 appId 获取相应的 AI 服务实例
-        CodeGeneratorService codeGeneratorService = codeGeneratorServiceFactory.getCodeGeneratorService(appId);
+        CodeGeneratorService codeGeneratorService = codeGeneratorServiceFactory.getCodeGeneratorService(appId, genCodeType);
         Flux<String> result = null;
         switch (genCodeType){
             case HTML:
@@ -72,6 +79,9 @@ public class AiCodeGeneratorFacade {
                 return generateStreamProcess(result, genCodeType, appId);
             case HCJ:
                 result = codeGeneratorService.generateHCJlCodeStream(userMessage);
+                return generateStreamProcess(result, genCodeType, appId);
+            case VUE_PROJECT:
+                result = codeGeneratorService.generateVueProjectCodeStream(appId,userMessage);
                 return generateStreamProcess(result, genCodeType, appId);
             default:
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"未知的生成类型");
@@ -102,5 +112,34 @@ public class AiCodeGeneratorFacade {
                     }
                 });
     }
-
+    /**
+     * 将 TokenStream 转换为 Flux<String>，并传递工具调用信息
+     *
+     * @param tokenStream TokenStream 对象
+     * @return Flux<String> 流式响应
+     */
+    private Flux<String> processTokenStream(TokenStream tokenStream) {
+        return Flux.create(sink -> {
+            tokenStream.onPartialResponse((String partialResponse) -> {
+                        AiResponseMessage aiResponseMessage = new AiResponseMessage(partialResponse);
+                        sink.next(JSONUtil.toJsonStr(aiResponseMessage));
+                    })
+                    .onPartialToolExecutionRequest((index, toolExecutionRequest) -> {
+                        ToolRequestMessage toolRequestMessage = new ToolRequestMessage(toolExecutionRequest);
+                        sink.next(JSONUtil.toJsonStr(toolRequestMessage));
+                    })
+                    .onToolExecuted((ToolExecution toolExecution) -> {
+                        ToolExecutedMessage toolExecutedMessage = new ToolExecutedMessage(toolExecution);
+                        sink.next(JSONUtil.toJsonStr(toolExecutedMessage));
+                    })
+                    .onCompleteResponse((ChatResponse response) -> {
+                        sink.complete();
+                    })
+                    .onError((Throwable error) -> {
+                        error.printStackTrace();
+                        sink.error(error);
+                    })
+                    .start();
+        });
+    }
 }

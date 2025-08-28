@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yuhao.smarteasybuild.constant.AppConstant;
 import com.yuhao.smarteasybuild.core.AiCodeGeneratorFacade;
+import com.yuhao.smarteasybuild.core.handler.StreamHandlerExecutor;
 import com.yuhao.smarteasybuild.exception.BusinessException;
 import com.yuhao.smarteasybuild.exception.ErrorCode;
 import com.yuhao.smarteasybuild.exception.ThrowUtils;
@@ -52,6 +53,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     private UserServiceImpl userService;
     @Resource
     private ChatHistoryServiceImpl chatHistoryService;
+    @Resource
+    private StreamHandlerExecutor streamHandlerExecutor;
     @Override
     public AppVO getAppVO(App app) {
         if (app == null) {
@@ -141,23 +144,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         // 5. 调用 AI 生成代码
         Flux<String> contentFlux = aiCodeGeneratorFacade.generateCodeAndSaveStream(message, codeGenTypeEnum, appId);
         StringBuilder aiResult = new StringBuilder();
-        return contentFlux
-                .map(chunk -> {
-                    aiResult.append(chunk);
-                    return  chunk;
-                }).doOnComplete(() -> {
-                    //收集完成后的操作
-                    String aiResponse = aiResult.toString();
-                    if (StrUtil.isNotBlank(aiResponse)) {
-                        // 保存 AI 回复到对话历史
-                        chatHistoryService.saveMessage(appId,loginUser.getId(),aiResponse, ChatHistoryMessageTypeEnum.AI.getValue());
-                    }
-                }).doOnError(error -> {
-                    //收集失败的操作
-                    log.error("代码生成失败", error);
-                    String errorMessage ="AI回复失败" + error.getMessage();
-                    chatHistoryService.saveMessage(appId,loginUser.getId(),errorMessage, ChatHistoryMessageTypeEnum.AI.getValue());
-                });
+        return  streamHandlerExecutor.doExecute(contentFlux, chatHistoryService, appId, loginUser, codeGenTypeEnum);
     }
 
     @Override

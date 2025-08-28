@@ -5,7 +5,8 @@ import cn.hutool.core.util.ObjectUtil;
 public enum GenCodeTypeEnum {
 
     HTML("原生 HTML 模式", "html"),
-    HCJ("HCJ 模式", "hcj");
+    HCJ("HCJ 模式", "hcj"),
+    VUE_PROJECT("Vue 工程模式", "vue_project");
 
     private String name;
     private String value;

@@ -2,7 +2,9 @@ package com.yuhao.smarteasybuild.ai;
 
 import com.yuhao.smarteasybuild.ai.model.HCJCodeResult;
 import com.yuhao.smarteasybuild.ai.model.HtmlCodeResult;
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.UserMessage;
 import reactor.core.publisher.Flux;
 
 
@@ -39,4 +41,14 @@ public interface CodeGeneratorService {
      */
     @SystemMessage(fromResource = "prompt/generate-hcj-system-prompt.txt")
     Flux<String>  generateHCJlCodeStream(String userMessage);
+
+
+    /**
+     * 生成 Vue 项目代码（流式）
+     * @param appId
+     * @param userMessage
+     * @return
+     */
+    @SystemMessage(fromResource = "prompt/generate-vue-system-prompt.txt")
+    Flux<String> generateVueProjectCodeStream(@MemoryId Long appId, @UserMessage String userMessage);
 }
