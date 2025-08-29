@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yuhao.smarteasybuild.constant.AppConstant;
 import com.yuhao.smarteasybuild.core.AiCodeGeneratorFacade;
+import com.yuhao.smarteasybuild.core.builder.VueProjectBuilder;
 import com.yuhao.smarteasybuild.core.handler.StreamHandlerExecutor;
 import com.yuhao.smarteasybuild.exception.BusinessException;
 import com.yuhao.smarteasybuild.exception.ErrorCode;
@@ -55,6 +56,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     private ChatHistoryServiceImpl chatHistoryService;
     @Resource
     private StreamHandlerExecutor streamHandlerExecutor;
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
     @Override
     public AppVO getAppVO(App app) {
         if (app == null) {
@@ -143,15 +146,17 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         chatHistoryService.saveMessage(appId,loginUser.getId(),message, ChatHistoryMessageTypeEnum.USER.getValue());
         // 5. 调用 AI 生成代码
         Flux<String> contentFlux = aiCodeGeneratorFacade.generateCodeAndSaveStream(message, codeGenTypeEnum, appId);
-        StringBuilder aiResult = new StringBuilder();
+
         return  streamHandlerExecutor.doExecute(contentFlux, chatHistoryService, appId, loginUser, codeGenTypeEnum);
     }
 
     @Override
     public String deployApp(Long appId, User loginUser) {
         ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 不能为空");
+        //获取应用信息
         App app = this.getById(appId);
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        //权限校验
         if (!app.getUserId().equals(loginUser.getId())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限访问该应用");
         }
@@ -162,11 +167,22 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         //获取代码生成类型及，源路径
         String codeGenTypeStr = app.getCodeGenType();
         String sourceName = codeGenTypeStr + "_" + appId;
-        String sourcePath = AppConstant.CODE_DEPLOY_PATH + File.separator +sourceName;
+        String sourcePath = AppConstant.CODE_GEN_PATH + File.separator +sourceName;
 
         //检验代码文件是否存在
         if (!FileUtil.exist(sourcePath)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "代码不存在");
+        }
+
+        //若是Vue项目需要构建部署
+        GenCodeTypeEnum codeGenTypeEnum = GenCodeTypeEnum.getEnumByValue(codeGenTypeStr);
+        if(codeGenTypeEnum == GenCodeTypeEnum.VUE_PROJECT){
+            boolean isSuccess = vueProjectBuilder.buildVueProject(sourcePath);
+            ThrowUtils.throwIf(!isSuccess, ErrorCode.SYSTEM_ERROR, "Vue 项目构建失败，请重试");
+            // 检查 dist 目录是否存在
+            File distDir = new File(sourcePath, "dist");
+            ThrowUtils.throwIf(!distDir.exists(), ErrorCode.SYSTEM_ERROR, "Vue 项目构建完成但未生成 dist 目录");
+            sourcePath = sourcePath + File.separator + "dist";
         }
         //将文件复制到部署目录下
         try {

@@ -82,7 +82,7 @@ public class AiCodeGeneratorFacade {
                 return generateStreamProcess(result, genCodeType, appId);
             case VUE_PROJECT:
                 result = codeGeneratorService.generateVueProjectCodeStream(appId,userMessage);
-                return generateStreamProcess(result, genCodeType, appId);
+                return processTokenStream((TokenStream) result);
             default:
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR,"未知的生成类型");
         }
