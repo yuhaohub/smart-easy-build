@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.yuhao.smarteasybuild.ai.AiCodeGenTypeRoutingService;
 import com.yuhao.smarteasybuild.annotation.AuthCheck;
 import com.yuhao.smarteasybuild.common.BaseResponse;
 import com.yuhao.smarteasybuild.common.ResultUtils;
@@ -53,6 +54,8 @@ public class AppController {
     @Resource
     private ProjectDownloadService projectDownloadService;
 
+    @Resource
+    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
 
     /**
      * 创建应用
@@ -75,8 +78,9 @@ public class AppController {
         app.setUserId(loginUser.getId());
         // 应用名称暂时为 initPrompt 前 12 位
         app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)));
-        // 暂时设置为多文件生成
-        app.setCodeGenType(GenCodeTypeEnum.VUE_PROJECT.getValue());
+        // 通过 Ai智能路由选择合适生成类型
+        GenCodeTypeEnum codeGenType = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
+        app.setCodeGenType(codeGenType.getValue());
         // 插入数据库
         boolean result = appService.save(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
