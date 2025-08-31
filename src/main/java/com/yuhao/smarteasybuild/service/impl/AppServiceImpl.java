@@ -26,6 +26,9 @@ import com.yuhao.smarteasybuild.model.enums.GenCodeTypeEnum;
 import com.yuhao.smarteasybuild.model.vo.AppVO;
 import com.yuhao.smarteasybuild.model.vo.UserVO;
 import com.yuhao.smarteasybuild.service.AppService;
+import com.yuhao.smarteasybuild.service.ChatHistoryService;
+import com.yuhao.smarteasybuild.service.ScreenshotService;
+import com.yuhao.smarteasybuild.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,13 +54,15 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     @Resource
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;
     @Resource
-    private UserServiceImpl userService;
+    private UserService userService;
     @Resource
-    private ChatHistoryServiceImpl chatHistoryService;
+    private ChatHistoryService chatHistoryService;
     @Resource
     private StreamHandlerExecutor streamHandlerExecutor;
     @Resource
     private VueProjectBuilder vueProjectBuilder;
+    @Resource
+    private ScreenshotService screenshotService;
     @Override
     public AppVO getAppVO(App app) {
         if (app == null) {
@@ -190,6 +195,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         } catch (IORuntimeException e) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"部署失败:" + e.getMessage());
         }
+
         //更新部署时间
         App updateApp = new App();
         updateApp.setId(appId);
@@ -197,8 +203,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         updateApp.setDeployKey(deployKey);
         boolean result = this.updateById(updateApp);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        // 构建应用访问 URL
+        String appDeployUrl = String.format("%s/%s/", AppConstant.CODE_DEPLOY_DOMAIN, deployKey);
+        // 11. 异步生成截图并更新应用封面
+        generateAppScreenshotAsync(appId, appDeployUrl);
         //返回URL
-        return StrUtil.format("{}/{}", AppConstant.CODE_DEPLOY_DOMAIN, deployKey);
+        return appDeployUrl;
     }
 
     /**
@@ -225,6 +235,25 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         }
         // 删除应用
         return super.removeById(id);
+    }
+
+    /**
+     * 异步生成应用封面
+     * @param appId
+     * @param appDeployUrl
+     */
+    private void generateAppScreenshotAsync(Long appId, String appDeployUrl) {
+        // 异步生成截图并更新应用封面
+        Thread.startVirtualThread(() -> {
+            try {
+                String screenshotUrl = screenshotService.uploadScreenshot(appDeployUrl);
+                App updateApp = new App();
+                updateApp.setId(appId);
+                updateApp.setCover(screenshotUrl);
+                boolean updateResult = this.updateById(updateApp);
+                ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用封面失败");
+            } catch (Exception e){}
+        });
     }
 }
 
