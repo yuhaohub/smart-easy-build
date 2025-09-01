@@ -1,5 +1,6 @@
 package com.yuhao.smarteasybuild.ai.tools;
 
+import cn.hutool.json.JSONObject;
 import com.yuhao.smarteasybuild.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -15,7 +16,7 @@ import java.nio.file.Paths;
  * 文件删除工具(供Ai调用)
  */
 @Slf4j
-public class FileDeleteTool {
+public class FileDeleteTool extends BaseTool{
     @Tool("文件删除")
     public String deleteFile(@P("文件相对路径") String relativePath, @ToolMemoryId Long appId){
         Path path = Paths.get(relativePath);
@@ -60,5 +61,21 @@ public class FileDeleteTool {
             }
         }
         return false;
+    }
+
+    @Override
+    public String getToolName() {
+        return "deleteFile";
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "删除文件";
+    }
+
+    @Override
+    public String generateToolExecutedResult(JSONObject arguments) {
+        String relativeFilePath = arguments.getStr("relativeFilePath");
+        return String.format("[工具调用] %s %s", getDisplayName(), relativeFilePath);
     }
 }

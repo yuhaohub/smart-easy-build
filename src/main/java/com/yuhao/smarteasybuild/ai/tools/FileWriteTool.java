@@ -1,5 +1,7 @@
 package com.yuhao.smarteasybuild.ai.tools;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.json.JSONObject;
 import com.yuhao.smarteasybuild.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -17,7 +19,7 @@ import java.nio.file.StandardOpenOption;
  */
 
 @Slf4j
-public class FileWriteTool {
+public class FileWriteTool extends BaseTool{
 
     @Tool("文件写入")
     public String writeFile(@P("文件相对路径") String relativePath, @P("待写入的文件内容") String content,@ToolMemoryId Long appId){
@@ -47,5 +49,28 @@ public class FileWriteTool {
             return errorMessage;
         }
 
+    }
+
+    @Override
+    public String getToolName() {
+        return "writeFile";
+    }
+
+    @Override
+    public String getDisplayName() {
+        return "文件写入";
+    }
+
+    @Override
+    public String generateToolExecutedResult(JSONObject arguments) {
+        String relativeFilePath = arguments.getStr("relativeFilePath");
+        String suffix = FileUtil.getSuffix(relativeFilePath);
+        String content = arguments.getStr("content");
+        return String.format("""
+                        [工具调用] %s %s
+                        ```%s
+                        %s
+                        ```
+                        """, getDisplayName(), relativeFilePath, suffix, content);
     }
 }

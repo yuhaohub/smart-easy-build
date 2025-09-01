@@ -2,7 +2,7 @@ package com.yuhao.smarteasybuild.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.yuhao.smarteasybuild.ai.tools.FileWriteTool;
+import com.yuhao.smarteasybuild.ai.tools.ToolManager;
 import com.yuhao.smarteasybuild.exception.BusinessException;
 import com.yuhao.smarteasybuild.exception.ErrorCode;
 import com.yuhao.smarteasybuild.model.enums.GenCodeTypeEnum;
@@ -32,7 +32,8 @@ public class CodeGeneratorServiceFactory {
     private RedisChatMemoryStore redisChatMemoryStore;
     @Resource
     private ChatHistoryService chatHistoryService;
-
+    @Resource
+    private ToolManager toolManager;
     /**
      * Ai 服务实例缓存（本地）
      */
@@ -95,7 +96,7 @@ public class CodeGeneratorServiceFactory {
                         //生产环境替换成推理模型
                         .chatMemoryProvider(memoryId -> chatMemory)
                         .streamingChatModel(streamingChatModel)
-                        .tools(new FileWriteTool())
+                        .tools(toolManager.getAllTools())
                         .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                                 toolExecutionRequest,
                                 "Error: there is no tool called " + toolExecutionRequest.name()
