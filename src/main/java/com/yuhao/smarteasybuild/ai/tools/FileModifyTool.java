@@ -6,6 +6,7 @@ import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ import java.nio.file.StandardOpenOption;
  * 文件修改工具(供Ai调用)
  */
 @Slf4j
+@Component
 public class FileModifyTool extends BaseTool{
     @Tool("修改文件内容，用新内容替换指定的旧内容")
     public String modifyFile(
