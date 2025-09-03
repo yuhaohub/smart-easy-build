@@ -7,6 +7,7 @@ import com.yuhao.smarteasybuild.exception.BusinessException;
 import com.yuhao.smarteasybuild.exception.ErrorCode;
 import com.yuhao.smarteasybuild.model.enums.GenCodeTypeEnum;
 import com.yuhao.smarteasybuild.service.ChatHistoryService;
+import com.yuhao.smarteasybuild.utils.SpringContextUtil;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -23,10 +24,9 @@ import java.time.Duration;
 @Slf4j
 @Configuration
 public class CodeGeneratorServiceFactory {
-    @Resource
+    @Resource(name = "openAiChatModel")
     private ChatModel chatModel;
-    @Resource
-    private StreamingChatModel streamingChatModel;
+
 
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
@@ -86,16 +86,19 @@ public class CodeGeneratorServiceFactory {
 
         switch (genCodeType) {
             case HTML,HCJ:
+                StreamingChatModel openAiStreamingChatModel = SpringContextUtil.getBean("streamingChatModelPrototype", StreamingChatModel.class);
                 return AiServices.builder(CodeGeneratorService.class)
                         .chatModel(chatModel)
-                        .streamingChatModel(streamingChatModel)
+                        .streamingChatModel(openAiStreamingChatModel)
                         .chatMemory(chatMemory)
                         .build();
             case VUE_PROJECT:
+                StreamingChatModel reasoningStreamingChatModel = SpringContextUtil.getBean("reasoningStreamingChatModelPrototype", StreamingChatModel.class);
                 return AiServices.builder(CodeGeneratorService.class)
+                        .chatModel(chatModel)
                         //生产环境替换成推理模型
                         .chatMemoryProvider(memoryId -> chatMemory)
-                        .streamingChatModel(streamingChatModel)
+                        .streamingChatModel(reasoningStreamingChatModel)
                         .tools(toolManager.getAllTools())
                         .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                                 toolExecutionRequest,
