@@ -24,6 +24,8 @@ import com.yuhao.smarteasybuild.model.entity.App;
 import com.yuhao.smarteasybuild.model.entity.User;
 import com.yuhao.smarteasybuild.model.enums.GenCodeTypeEnum;
 import com.yuhao.smarteasybuild.model.vo.AppVO;
+import com.yuhao.smarteasybuild.ratelimit.annotation.RateLimit;
+import com.yuhao.smarteasybuild.ratelimit.enums.RateLimitType;
 import com.yuhao.smarteasybuild.service.AppService;
 import com.yuhao.smarteasybuild.service.ProjectDownloadService;
 import com.yuhao.smarteasybuild.service.UserService;
@@ -321,6 +323,7 @@ public class AppController {
      * @param request 请求对象
      * @return 生成结果流
      */
+    @RateLimit(limitType = RateLimitType.USER, rate = 8,rateInterval = 60,message = "请求AI过于频繁")
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
                                                        @RequestParam String message,
