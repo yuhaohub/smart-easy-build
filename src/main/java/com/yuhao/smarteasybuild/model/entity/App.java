@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -48,7 +49,7 @@ public class App implements Serializable {
     /**
      * 部署时间
      */
-    private Date deployedTime;
+    private LocalDateTime deployedTime;
 
     /**
      * 优先级
@@ -63,17 +64,17 @@ public class App implements Serializable {
     /**
      * 编辑时间
      */
-    private Date editTime;
+    private LocalDateTime editTime;
 
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 更新时间
      */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 是否删除

@@ -117,11 +117,8 @@ public class AppController {
         App app = new App();
         app.setId(id);
         app.setAppName(appUpdateRequest.getAppName());
-        // 设置编辑时间
-        LocalDateTime localDateTime = LocalDateTime.now();
-        // 转换为java.util.Date
-        Date date = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-        app.setEditTime(date);
+
+        app.setEditTime(LocalDateTime.now());
 
         boolean result = appService.updateById(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
@@ -266,10 +263,7 @@ public class AppController {
         App app = new App();
         BeanUtil.copyProperties(appAdminUpdateRequest, app);
         // 设置编辑时间
-        LocalDateTime localDateTime = LocalDateTime.now();
-        // 转换为java.util.Date
-        Date date = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-        app.setEditTime(date);
+        app.setEditTime(LocalDateTime.now());
         boolean result = appService.updateById(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);

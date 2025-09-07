@@ -1,6 +1,7 @@
 package com.yuhao.smarteasybuild.model.entity;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -54,17 +55,17 @@ public class User implements Serializable {
     /**
      * 创建时间
      */
-    private Date createTime;
+    private LocalDateTime createTime;
 
     /**
      * 用户编辑时间
      */
-    private Date editTime;
+    private LocalDateTime editTime;
 
     /**
      * 更新时间
      */
-    private Date updateTime;
+    private LocalDateTime updateTime;
 
     /**
      * 逻辑删除：0-1
