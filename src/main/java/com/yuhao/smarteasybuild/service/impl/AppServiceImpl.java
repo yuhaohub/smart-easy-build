@@ -46,14 +46,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
-* @author hyh
-* @description 针对表【app(应用表)】的数据库操作Service实现
-* @createDate 2025-08-17 21:43:57
-*/
+ * @author hyh
+ * @description 针对表【app(应用表)】的数据库操作Service实现
+ * @createDate 2025-08-17 21:43:57
+ */
 @Service
 @Slf4j
 public class AppServiceImpl extends ServiceImpl<AppMapper, App>
-    implements AppService{
+        implements AppService {
     @Resource
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;
     @Resource
@@ -66,6 +66,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     private VueProjectBuilder vueProjectBuilder;
     @Resource
     private ScreenshotService screenshotService;
+
     @Override
     public AppVO getAppVO(App app) {
         if (app == null) {
@@ -108,7 +109,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         queryWrapper.eq(ObjUtil.isNotNull(priority), "priority", priority);
         queryWrapper.eq(ObjUtil.isNotNull(userId), "userId", userId);
         queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
-        return  queryWrapper;
+        return queryWrapper;
 
     }
 
@@ -151,11 +152,17 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型");
         }
         // 保存用户消息到对话历史
-        chatHistoryService.saveMessage(appId,loginUser.getId(),message, ChatHistoryMessageTypeEnum.USER.getValue());
+        chatHistoryService.saveMessage(appId, loginUser.getId(), message, ChatHistoryMessageTypeEnum.USER.getValue());
+        // 设置监控上下文
+        MonitorContextHolder.setContext(MonitorContext.builder().userId(loginUser.getId().toString()).appId(appId.toString()).build());
         // 5. 调用 AI 生成代码
         Flux<String> contentFlux = aiCodeGeneratorFacade.generateCodeAndSaveStream(message, codeGenTypeEnum, appId);
 
-        return  streamHandlerExecutor.doExecute(contentFlux, chatHistoryService, appId, loginUser, codeGenTypeEnum);
+        return streamHandlerExecutor.doExecute(contentFlux, chatHistoryService, appId, loginUser, codeGenTypeEnum).doFinally(
+                signalType -> {
+                    MonitorContextHolder.clearContext();
+                }
+        );
     }
 
     @Override
@@ -175,7 +182,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         //获取代码生成类型及，源路径
         String codeGenTypeStr = app.getCodeGenType();
         String sourceName = codeGenTypeStr + "_" + appId;
-        String sourcePath = AppConstant.CODE_GEN_PATH + File.separator +sourceName;
+        String sourcePath = AppConstant.CODE_GEN_PATH + File.separator + sourceName;
 
         //检验代码文件是否存在
         if (!FileUtil.exist(sourcePath)) {
@@ -184,7 +191,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
 
         //若是Vue项目需要构建部署
         GenCodeTypeEnum codeGenTypeEnum = GenCodeTypeEnum.getEnumByValue(codeGenTypeStr);
-        if(codeGenTypeEnum == GenCodeTypeEnum.VUE_PROJECT){
+        if (codeGenTypeEnum == GenCodeTypeEnum.VUE_PROJECT) {
             boolean isSuccess = vueProjectBuilder.buildVueProject(sourcePath);
             ThrowUtils.throwIf(!isSuccess, ErrorCode.SYSTEM_ERROR, "Vue 项目构建失败，请重试");
             // 检查 dist 目录是否存在
@@ -196,7 +203,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         try {
             FileUtil.copy(sourcePath, AppConstant.CODE_DEPLOY_PATH + File.separator + deployKey, true);
         } catch (IORuntimeException e) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"部署失败:" + e.getMessage());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "部署失败:" + e.getMessage());
         }
 
         //更新部署时间
@@ -216,11 +223,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
 
     /**
      * 删除应用时删除关联的对话历史记录
+     *
      * @param id
      * @return
      */
     @Override
-    public boolean removeById(Serializable id){
+    public boolean removeById(Serializable id) {
         if (id == null) {
             return false;
         }
@@ -242,6 +250,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
 
     /**
      * 异步生成应用封面
+     *
      * @param appId
      * @param appDeployUrl
      */
@@ -255,7 +264,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
                 updateApp.setCover(screenshotUrl);
                 boolean updateResult = this.updateById(updateApp);
                 ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用封面失败");
-            } catch (Exception e){}
+            } catch (Exception e) {
+            }
         });
     }
 }
