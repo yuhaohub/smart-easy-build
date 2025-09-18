@@ -24,7 +24,7 @@ public interface AppService extends IService<App> {
       * @param appQueryRequest
       * @return
       */
-     QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest);
+     QueryWrapper<App> getQueryWrapper(AppQueryRequest appQueryRequest);
 
      /**
       * 分页获取应用类别

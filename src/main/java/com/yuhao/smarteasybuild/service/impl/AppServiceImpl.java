@@ -25,6 +25,8 @@ import com.yuhao.smarteasybuild.model.enums.ChatHistoryMessageTypeEnum;
 import com.yuhao.smarteasybuild.model.enums.GenCodeTypeEnum;
 import com.yuhao.smarteasybuild.model.vo.AppVO;
 import com.yuhao.smarteasybuild.model.vo.UserVO;
+import com.yuhao.smarteasybuild.monitor.MonitorContext;
+import com.yuhao.smarteasybuild.monitor.MonitorContextHolder;
 import com.yuhao.smarteasybuild.service.AppService;
 import com.yuhao.smarteasybuild.service.ChatHistoryService;
 import com.yuhao.smarteasybuild.service.ScreenshotService;
@@ -36,6 +38,7 @@ import reactor.core.publisher.Flux;
 
 import java.io.File;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +84,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
     }
 
     @Override
-    public QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest) {
+    public QueryWrapper<App> getQueryWrapper(AppQueryRequest appQueryRequest) {
         if (appQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
         }
@@ -199,7 +202,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>
         //更新部署时间
         App updateApp = new App();
         updateApp.setId(appId);
-        updateApp.setDeployedTime(DateTime.now());
+        updateApp.setDeployedTime(LocalDateTime.now());
         updateApp.setDeployKey(deployKey);
         boolean result = this.updateById(updateApp);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);

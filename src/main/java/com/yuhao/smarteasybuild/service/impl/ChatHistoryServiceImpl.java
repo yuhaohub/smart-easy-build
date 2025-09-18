@@ -80,6 +80,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         if (lastTime != null) {
             queryWrapper.lt("createTime", lastTime);
         }
+        queryWrapper.orderByDesc("createTime");
         return this.page(Page.of(1, pageSize), queryWrapper);
     }
 

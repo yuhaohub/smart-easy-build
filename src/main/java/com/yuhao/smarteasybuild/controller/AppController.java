@@ -45,6 +45,8 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/app")
@@ -184,7 +186,7 @@ public class AppController {
         long pageNum = appQueryRequest.getCurrPage();
         // 只查询当前用户的应用
         appQueryRequest.setUserId(loginUser.getId());
-        QueryWrapper queryWrapper = appService.getQueryWrapper(appQueryRequest);
+        QueryWrapper<App> queryWrapper = appService.getQueryWrapper(appQueryRequest);
         Page<App> appPage = appService.page(Page.of(pageNum, pageSize), queryWrapper);
         // 数据封装
         Page<AppVO> appVOPage = new Page<>(pageNum, pageSize, appPage.getTotal());
@@ -213,7 +215,7 @@ public class AppController {
         long pageNum = appQueryRequest.getCurrPage();
         // 只查询精选的应用
         appQueryRequest.setPriority(AppConstant.GOOD_APP_PRIORITY);
-        QueryWrapper queryWrapper = appService.getQueryWrapper(appQueryRequest);
+        QueryWrapper<App> queryWrapper = appService.getQueryWrapper(appQueryRequest);
         // 分页查询
         Page<App> appPage = appService.page(Page.of(pageNum, pageSize), queryWrapper);
         // 数据封装
@@ -281,7 +283,7 @@ public class AppController {
         ThrowUtils.throwIf(appQueryRequest == null, ErrorCode.PARAMS_ERROR);
         long pageNum = appQueryRequest.getCurrPage();
         long pageSize = appQueryRequest.getPageSize();
-        QueryWrapper queryWrapper = appService.getQueryWrapper(appQueryRequest);
+        QueryWrapper<App> queryWrapper = appService.getQueryWrapper(appQueryRequest);
         Page<App> appPage = appService.page(Page.of(pageNum, pageSize), queryWrapper);
         // 数据封装
         Page<AppVO> appVOPage = new Page<>(pageNum, pageSize, appPage.getTotal());
